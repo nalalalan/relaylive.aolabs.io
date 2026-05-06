@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Relay Live</title>
-  <meta name="description" content="Live aggregate signal dashboard for Relay.">
+  <meta name="description" content="Live trend dashboard for Relay.">
   <link rel="canonical" href="https://relaylive.aolabs.io/">
   <meta name="theme-color" content="#f7f5f0">
   <style>
@@ -13,13 +13,14 @@
       --bg: #f7f5f0;
       --panel: #fffefa;
       --ink: #15120e;
-      --muted: #716b62;
+      --muted: #6f675d;
       --line: #ded8cf;
       --soft: #ece7dd;
-      --good: #266a4a;
-      --watch: #8d5b19;
-      --blue: #285f8f;
-      --shadow: 0 18px 52px rgba(40, 32, 23, .08);
+      --good: #246345;
+      --warn: #8b5a19;
+      --blue: #2b5f8d;
+      --red: #963a2c;
+      --shadow: 0 18px 46px rgba(40, 32, 23, .07);
     }
 
     * { box-sizing: border-box; }
@@ -31,17 +32,15 @@
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
+      overflow-x: hidden;
     }
 
     a { color: inherit; text-decoration: none; }
-
-    button {
-      font: inherit;
-      color: inherit;
-    }
+    button { font: inherit; color: inherit; }
 
     .wrap {
-      width: min(calc(100% - 28px), 1120px);
+      width: calc(100% - 28px);
+      max-width: 1180px;
       margin: 0 auto;
     }
 
@@ -50,35 +49,36 @@
       top: 0;
       z-index: 5;
       border-bottom: 1px solid var(--line);
-      background: rgba(247, 245, 240, .9);
-      backdrop-filter: blur(16px);
+      background: rgba(247, 245, 240, .92);
+      backdrop-filter: blur(14px);
     }
 
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 62px;
+      min-height: 58px;
       gap: 14px;
     }
 
     .brand {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 10px;
-      min-width: 0;
+      font-size: 14px;
       font-weight: 850;
+      white-space: nowrap;
     }
 
     .mark {
       display: grid;
       place-items: center;
-      width: 34px;
-      height: 34px;
+      width: 31px;
+      height: 31px;
       border-radius: 8px;
       background: var(--ink);
       color: #fff;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
     }
 
@@ -87,8 +87,8 @@
       align-items: center;
       gap: 8px;
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 720;
+      font-size: 12px;
+      font-weight: 760;
       white-space: nowrap;
     }
 
@@ -96,14 +96,14 @@
       width: 8px;
       height: 8px;
       border-radius: 999px;
-      background: var(--watch);
+      background: var(--warn);
     }
 
     .dot.live { background: var(--good); }
-    .dot.err { background: #9d2f25; }
+    .dot.err { background: var(--red); }
 
     main {
-      padding: 28px 0 42px;
+      padding: 24px 0 42px;
     }
 
     .hero {
@@ -111,25 +111,30 @@
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 18px;
       align-items: end;
-      padding: 16px 0 20px;
+      padding: 6px 0 18px;
     }
 
     h1,
+    h2,
+    h3,
     p {
       margin: 0;
     }
 
     h1 {
-      font-size: clamp(42px, 8vw, 92px);
-      line-height: .9;
+      font-size: clamp(32px, 5vw, 54px);
+      line-height: .98;
       font-weight: 900;
     }
 
     .sub {
-      margin-top: 10px;
+      margin-top: 8px;
       color: var(--muted);
-      font-size: clamp(17px, 2vw, 22px);
+      font-size: clamp(16px, 1.9vw, 20px);
       font-weight: 650;
+      line-height: 1.35;
+      max-width: 760px;
+      overflow-wrap: anywhere;
     }
 
     .tabs {
@@ -139,10 +144,11 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel);
+      max-width: 100%;
     }
 
     .tab {
-      min-width: 68px;
+      min-width: 70px;
       min-height: 38px;
       border: 0;
       border-right: 1px solid var(--line);
@@ -164,11 +170,11 @@
       gap: 12px;
     }
 
-    .metrics {
+    .answer-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .metric,
+    .card,
     .panel,
     .signal {
       border: 1px solid var(--line);
@@ -177,9 +183,9 @@
       box-shadow: var(--shadow);
     }
 
-    .metric {
-      min-height: 116px;
-      padding: 16px;
+    .card {
+      min-height: 110px;
+      padding: 15px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -193,86 +199,191 @@
     }
 
     .value {
-      margin-top: 8px;
-      font-size: clamp(30px, 4vw, 44px);
+      margin-top: 7px;
+      font-size: clamp(28px, 4vw, 43px);
       line-height: 1;
       font-weight: 900;
     }
 
+    .value.good { color: var(--good); }
+    .value.warn { color: var(--warn); }
+    .value.blue { color: var(--blue); }
+
     .hint {
-      margin-top: 8px;
+      margin-top: 7px;
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 650;
+      font-size: 12px;
+      font-weight: 680;
       line-height: 1.35;
-    }
-
-    .stage {
-      color: var(--blue);
-    }
-
-    .money {
-      color: var(--good);
+      overflow-wrap: anywhere;
     }
 
     .main-grid {
-      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+      grid-template-columns: minmax(0, 1.25fr) minmax(310px, .75fr);
       margin-top: 12px;
     }
 
     .panel {
-      min-height: 220px;
       padding: 16px;
+      min-height: 238px;
+      overflow: hidden;
+    }
+
+    .panel.tall {
+      min-height: 320px;
     }
 
     .panel-head {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: start;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     h2 {
-      margin: 0;
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 900;
+      line-height: 1.1;
     }
 
     .small {
       color: var(--muted);
       font-size: 12px;
       font-weight: 760;
+      white-space: nowrap;
     }
 
-    .bar-list {
-      display: grid;
-      gap: 9px;
+    .caption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 680;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
-    .bar-row {
+    .chart {
+      width: 100%;
+      height: 230px;
+      display: block;
+    }
+
+    .axis {
+      stroke: #bdb5aa;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .grid-line {
+      stroke: #e7e1d8;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .axis-label,
+    .tick-label {
+      fill: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .series-views {
+      fill: none;
+      stroke: var(--blue);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .series-actions {
+      fill: none;
+      stroke: var(--good);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dot-point {
+      stroke: var(--panel);
+      stroke-width: 2;
+    }
+
+    .bar-view {
+      fill: var(--blue);
+    }
+
+    .bar-action {
+      fill: var(--good);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+
+    .key.action { background: var(--good); }
+
+    .funnel {
       display: grid;
-      grid-template-columns: 118px minmax(0, 1fr) 44px;
+      gap: 10px;
+    }
+
+    .funnel-row {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr) 76px;
       gap: 10px;
       align-items: center;
-      min-height: 24px;
+      min-height: 30px;
       color: var(--muted);
       font-size: 13px;
       font-weight: 760;
     }
 
-    .bar-track {
-      height: 8px;
+    .track {
+      height: 10px;
       border-radius: 999px;
       background: var(--soft);
       overflow: hidden;
     }
 
     .bar {
-      width: 0%;
+      display: block;
       height: 100%;
       border-radius: inherit;
       background: var(--ink);
+    }
+
+    .count {
+      display: inline-flex;
+      justify-content: flex-end;
+      gap: 4px;
+      color: var(--ink);
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .pct {
+      color: var(--muted);
+      font-weight: 700;
     }
 
     .signals {
@@ -285,53 +396,52 @@
       box-shadow: none;
     }
 
-    .signal-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-    }
-
     .signal-name {
       font-size: 14px;
       font-weight: 850;
       line-height: 1.25;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 0 9px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 850;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
     }
 
     .signal-meta {
-      margin-top: 8px;
+      margin-top: 7px;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 690;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
-    .hour-bars {
+    .plain-list {
       display: grid;
-      grid-template-columns: repeat(24, minmax(4px, 1fr));
-      gap: 4px;
-      align-items: end;
-      min-height: 110px;
-      padding-top: 8px;
+      gap: 10px;
     }
 
-    .hour {
-      min-height: 3px;
-      border-radius: 4px 4px 0 0;
-      background: var(--ink);
-      opacity: .9;
+    .plain-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: baseline;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+    }
+
+    .plain-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .plain-row strong {
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .plain-row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-align: right;
+      white-space: nowrap;
     }
 
     .links {
@@ -364,13 +474,13 @@
       font-weight: 720;
     }
 
-    @media (max-width: 880px) {
+    @media (max-width: 940px) {
       .hero,
       .main-grid {
         grid-template-columns: minmax(0, 1fr);
       }
 
-      .metrics {
+      .answer-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
@@ -379,21 +489,45 @@
       }
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 580px) {
       .wrap {
-        width: min(calc(100% - 22px), 420px);
-      }
-
-      .metrics {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .bar-row {
-        grid-template-columns: 98px minmax(0, 1fr) 36px;
+        width: calc(100% - 22px);
+        max-width: 430px;
       }
 
       h1 {
-        font-size: 56px;
+        font-size: 32px;
+      }
+
+      .answer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .tab {
+        min-width: 0;
+        padding: 0 7px;
+        font-size: 12px;
+      }
+
+      .panel-head {
+        align-items: start;
+      }
+
+      .small {
+        white-space: normal;
+        text-align: right;
+      }
+
+      .chart {
+        height: 200px;
+      }
+
+      .funnel-row {
+        grid-template-columns: 86px minmax(0, 1fr) 62px;
+      }
+
+      footer {
+        flex-direction: column;
       }
     }
   </style>
@@ -415,81 +549,111 @@
   <main class="wrap">
     <section class="hero" aria-label="Relay live status">
       <div>
-        <h1>Relay</h1>
-        <p class="sub" id="summaryLine">Watching every useful signal.</p>
+        <h1>Is Relay improving?</h1>
+        <p class="sub" id="summaryLine">Loading the live trend.</p>
       </div>
       <div class="tabs" role="tablist" aria-label="Time range">
         <button class="tab active" data-days="1" type="button">Day</button>
         <button class="tab" data-days="7" type="button">Week</button>
         <button class="tab" data-days="30" type="button">Month</button>
-        <button class="tab" data-days="90" type="button">90d</button>
+        <button class="tab" data-days="90" type="button">90 days</button>
       </div>
     </section>
 
-    <section class="grid metrics" aria-label="Key metrics">
-      <article class="metric">
+    <section class="grid answer-grid" aria-label="Current answers">
+      <article class="card">
         <div>
-          <div class="label">Stage</div>
-          <div id="stageValue" class="value stage">-</div>
+          <div class="label">Views today</div>
+          <div id="viewsValue" class="value blue">-</div>
         </div>
-        <p id="stageHint" class="hint">waiting for live data</p>
+        <div id="viewsHint" class="hint">-</div>
       </article>
-      <article class="metric">
+      <article class="card">
+        <div>
+          <div class="label">Offer clicks today</div>
+          <div id="clicksValue" class="value good">-</div>
+        </div>
+        <div id="clicksHint" class="hint">Sample, notes, checkout, or lead action.</div>
+      </article>
+      <article class="card">
         <div>
           <div class="label">Money</div>
-          <div id="moneyValue" class="value money">$0</div>
+          <div id="moneyValue" class="value warn">$0</div>
         </div>
-        <p id="moneyHint" class="hint">payments: 0</p>
+        <div id="moneyHint" class="hint">0 paid tests.</div>
       </article>
-      <article class="metric">
+      <article class="card">
         <div>
-          <div class="label">Actions</div>
-          <div id="actionsValue" class="value">-</div>
+          <div class="label">Next system move</div>
+          <div id="nextMoveValue" class="value">-</div>
         </div>
-        <p id="actionsHint" class="hint">sessions doing something</p>
-      </article>
-      <article class="metric">
-        <div>
-          <div class="label">Signals</div>
-          <div id="signalsValue" class="value">-</div>
-        </div>
-        <p id="signalsHint" class="hint">positive movement found</p>
+        <div id="nextMoveHint" class="hint">-</div>
       </article>
     </section>
 
-    <section class="grid main-grid" aria-label="Live signal details">
-      <article class="panel">
+    <section class="grid main-grid" aria-label="Live trend charts">
+      <article class="panel tall">
         <div class="panel-head">
-          <h2>Funnel</h2>
-          <span id="rangeLabel" class="small">Day</span>
+          <h2>Views and actions over time</h2>
+          <span id="trendRange" class="small">local dates</span>
         </div>
-        <div id="funnelBars" class="bar-list"></div>
+        <svg id="trendChart" class="chart" role="img" aria-label="Line chart of page views and action clicks by date"></svg>
+        <div class="legend">
+          <span><i class="key"></i>views</span>
+          <span><i class="key action"></i>offer clicks</span>
+        </div>
+        <p id="trendCaption" class="caption">-</p>
       </article>
 
       <article class="panel">
         <div class="panel-head">
-          <h2>Moving</h2>
+          <h2>What matters</h2>
           <span id="updatedAt" class="small">-</span>
         </div>
         <div id="signalsList" class="signals"></div>
       </article>
     </section>
 
-    <section class="grid main-grid" aria-label="Timing and live pulse">
+    <section class="grid main-grid" aria-label="Funnel and timing">
       <article class="panel">
         <div class="panel-head">
-          <h2>Today</h2>
-          <span class="small">UTC hours</span>
+          <h2>Funnel</h2>
+          <span id="rangeLabel" class="small">selected range</span>
         </div>
-        <div id="hourBars" class="hour-bars"></div>
+        <div id="funnelRows" class="funnel"></div>
+        <p id="funnelCaption" class="caption">-</p>
       </article>
 
       <article class="panel">
         <div class="panel-head">
-          <h2>Timing</h2>
-          <span class="small">first-party data</span>
+          <h2>First action timing</h2>
+          <span class="small">from first page view</span>
         </div>
-        <div id="timingBars" class="bar-list"></div>
+        <div id="timingList" class="plain-list"></div>
+        <p class="caption">Median time among sessions where that action happened. Empty or weird values mean there is not enough clean data yet.</p>
+      </article>
+    </section>
+
+    <section class="grid main-grid" aria-label="Today and next action">
+      <article class="panel tall">
+        <div class="panel-head">
+          <h2>Today by hour</h2>
+          <span class="small">your local time</span>
+        </div>
+        <svg id="hourChart" class="chart" role="img" aria-label="Bar chart of views and offer clicks by local hour"></svg>
+        <div class="legend">
+          <span><i class="key"></i>views</span>
+          <span><i class="key action"></i>offer clicks</span>
+        </div>
+        <p id="hourCaption" class="caption">-</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Autonomous loop</h2>
+          <span class="small">plain status</span>
+        </div>
+        <div id="loopList" class="plain-list"></div>
       </article>
     </section>
 
@@ -513,15 +677,24 @@
       var lastEvidence = null;
       var lastOps = null;
 
-      var names = {
+      var ACTION_EVENTS = [
+        "sample_click",
+        "showcase_sample_click",
+        "note_intake_click",
+        "notes_started",
+        "notes_100_chars",
+        "note_intake_submit",
+        "checkout_click",
+        "lead_capture"
+      ];
+
+      var EVENT_NAMES = {
         page_view: "views",
         page_engagement: "engaged",
-        scroll_depth: "scroll",
         sample_click: "sample",
         showcase_sample_click: "sample",
         note_intake_click: "notes",
         notes_started: "started",
-        notes_100_chars: "100 chars",
         note_intake_submit: "submitted",
         checkout_click: "checkout",
         lead_capture: "leads"
@@ -533,6 +706,7 @@
 
       function fmt(value) {
         var n = Number(value || 0);
+        if (!Number.isFinite(n)) return "0";
         if (n >= 1000) return n.toLocaleString();
         return String(Math.round(n * 100) / 100);
       }
@@ -542,129 +716,446 @@
         return "$" + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
       }
 
+      function pct(value) {
+        var n = Number(value || 0);
+        if (!Number.isFinite(n)) return "0%";
+        if (Math.abs(n) >= 100) return Math.round(n) + "%";
+        return Math.round(n * 10) / 10 + "%";
+      }
+
+      function formatDuration(seconds) {
+        var n = Number(seconds || 0);
+        if (!Number.isFinite(n) || n <= 0) return "-";
+        if (n < 60) return Math.round(n) + " sec";
+        if (n < 3600) return Math.round(n / 60) + " min";
+        if (n < 86400) return Math.round((n / 3600) * 10) / 10 + " hr";
+        return Math.round((n / 86400) * 10) / 10 + " days";
+      }
+
+      function rangeName() {
+        if (days === 1) return "today";
+        if (days === 7) return "week";
+        if (days === 30) return "month";
+        return "90 days";
+      }
+
+      function rolling(data, key, overrideDays) {
+        var windowKey = (overrideDays || days) + "d";
+        var counts = (((data || {}).rolling || {}).intent_event_counts || {})[windowKey] || {};
+        return Number(counts[key] || 0);
+      }
+
+      function actionTotal(data, overrideDays) {
+        return ACTION_EVENTS.reduce(function (sum, key) {
+          return sum + rolling(data, key, overrideDays);
+        }, 0);
+      }
+
+      function dateKey(date) {
+        var parts = new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).formatToParts(date);
+        var map = {};
+        parts.forEach(function (part) { map[part.type] = part.value; });
+        return map.year + "-" + map.month + "-" + map.day;
+      }
+
+      function shortDate(key) {
+        var date = new Date(key + "T12:00:00");
+        return new Intl.DateTimeFormat([], { month: "short", day: "numeric" }).format(date);
+      }
+
+      function hourLabel(hour) {
+        if (hour === 0) return "12a";
+        if (hour === 12) return "12p";
+        if (hour < 12) return hour + "a";
+        return (hour - 12) + "p";
+      }
+
+      function hourlyRows(evidence) {
+        return ((((evidence || {}).observable_signals || {}).hourly_event_counts_utc) || []).map(function (row) {
+          return {
+            date: new Date(row.hour),
+            events: row.events || {}
+          };
+        }).filter(function (row) {
+          return !Number.isNaN(row.date.getTime());
+        });
+      }
+
+      function dailySeries(evidence) {
+        var lookbackDays = days === 1 ? 7 : Math.max(days, 1);
+        var cutoff = Date.now() - lookbackDays * 86400000;
+        var map = {};
+        hourlyRows(evidence).forEach(function (row) {
+          if (row.date.getTime() < cutoff) return;
+          var key = dateKey(row.date);
+          if (!map[key]) map[key] = { label: key, views: 0, actions: 0 };
+          map[key].views += Number(row.events.page_view || 0);
+          ACTION_EVENTS.forEach(function (eventName) {
+            map[key].actions += Number(row.events[eventName] || 0);
+          });
+        });
+        return Object.keys(map).sort().map(function (key) { return map[key]; });
+      }
+
+      function todayHourlySeries(evidence) {
+        var today = dateKey(new Date());
+        var slots = Array.from({ length: 24 }, function (_, hour) {
+          return { hour: hour, views: 0, actions: 0 };
+        });
+        hourlyRows(evidence).forEach(function (row) {
+          if (dateKey(row.date) !== today) return;
+          var hour = row.date.getHours();
+          slots[hour].views += Number(row.events.page_view || 0);
+          ACTION_EVENTS.forEach(function (eventName) {
+            slots[hour].actions += Number(row.events[eventName] || 0);
+          });
+        });
+        return slots;
+      }
+
+      function svgEl(name, attrs) {
+        var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+        Object.keys(attrs || {}).forEach(function (key) {
+          el.setAttribute(key, attrs[key]);
+        });
+        return el;
+      }
+
+      function addText(svg, text, x, y, cls, anchor) {
+        var el = svgEl("text", {
+          x: x,
+          y: y,
+          class: cls || "tick-label",
+          "text-anchor": anchor || "middle"
+        });
+        el.textContent = text;
+        svg.appendChild(el);
+      }
+
+      function drawLineChart(id, rows) {
+        var svg = $(id);
+        svg.innerHTML = "";
+        var width = 760;
+        var height = 230;
+        var pad = { left: 48, right: 16, top: 18, bottom: 42 };
+        svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+
+        if (!rows.length) {
+          addText(svg, "No trend data yet", width / 2, height / 2, "axis-label", "middle");
+          return;
+        }
+
+        var max = Math.max.apply(null, rows.map(function (row) {
+          return Math.max(row.views, row.actions);
+        }).concat([1]));
+        var xRange = Math.max(rows.length - 1, 1);
+        var plotW = width - pad.left - pad.right;
+        var plotH = height - pad.top - pad.bottom;
+        var yMax = Math.max(1, Math.ceil(max));
+
+        function x(i) {
+          return pad.left + (i / xRange) * plotW;
+        }
+
+        function y(value) {
+          return pad.top + plotH - (Number(value || 0) / yMax) * plotH;
+        }
+
+        [0, .5, 1].forEach(function (p) {
+          var yy = pad.top + plotH - p * plotH;
+          svg.appendChild(svgEl("line", { x1: pad.left, y1: yy, x2: width - pad.right, y2: yy, class: "grid-line" }));
+          addText(svg, fmt(yMax * p), pad.left - 10, yy + 4, "tick-label", "end");
+        });
+
+        svg.appendChild(svgEl("line", { x1: pad.left, y1: pad.top, x2: pad.left, y2: pad.top + plotH, class: "axis" }));
+        svg.appendChild(svgEl("line", { x1: pad.left, y1: pad.top + plotH, x2: width - pad.right, y2: pad.top + plotH, class: "axis" }));
+
+        function pathFor(key) {
+          return rows.map(function (row, i) {
+            return (i === 0 ? "M" : "L") + x(i).toFixed(1) + " " + y(row[key]).toFixed(1);
+          }).join(" ");
+        }
+
+        svg.appendChild(svgEl("path", { d: pathFor("views"), class: "series-views" }));
+        svg.appendChild(svgEl("path", { d: pathFor("actions"), class: "series-actions" }));
+
+        rows.forEach(function (row, i) {
+          svg.appendChild(svgEl("circle", { cx: x(i), cy: y(row.views), r: 4, fill: "var(--blue)", class: "dot-point" }));
+          svg.appendChild(svgEl("circle", { cx: x(i), cy: y(row.actions), r: 4, fill: "var(--good)", class: "dot-point" }));
+        });
+
+        var tickIndexes = rows.length <= 5
+          ? rows.map(function (_, i) { return i; })
+          : [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
+        tickIndexes.forEach(function (i) {
+          addText(svg, shortDate(rows[i].label), x(i), height - 18, "tick-label", "middle");
+        });
+        addText(svg, "count", pad.left, 10, "axis-label", "start");
+        addText(svg, "date", width / 2, height - 2, "axis-label", "middle");
+      }
+
+      function drawHourChart(id, rows) {
+        var svg = $(id);
+        svg.innerHTML = "";
+        var width = 760;
+        var height = 230;
+        var pad = { left: 48, right: 16, top: 18, bottom: 42 };
+        svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+
+        var max = Math.max.apply(null, rows.map(function (row) {
+          return Math.max(row.views, row.actions);
+        }).concat([1]));
+        var plotW = width - pad.left - pad.right;
+        var plotH = height - pad.top - pad.bottom;
+        var slotW = plotW / rows.length;
+        var yMax = Math.max(1, Math.ceil(max));
+
+        function y(value) {
+          return pad.top + plotH - (Number(value || 0) / yMax) * plotH;
+        }
+
+        [0, .5, 1].forEach(function (p) {
+          var yy = pad.top + plotH - p * plotH;
+          svg.appendChild(svgEl("line", { x1: pad.left, y1: yy, x2: width - pad.right, y2: yy, class: "grid-line" }));
+          addText(svg, fmt(yMax * p), pad.left - 10, yy + 4, "tick-label", "end");
+        });
+
+        svg.appendChild(svgEl("line", { x1: pad.left, y1: pad.top, x2: pad.left, y2: pad.top + plotH, class: "axis" }));
+        svg.appendChild(svgEl("line", { x1: pad.left, y1: pad.top + plotH, x2: width - pad.right, y2: pad.top + plotH, class: "axis" }));
+
+        rows.forEach(function (row, i) {
+          var x0 = pad.left + i * slotW + 3;
+          var viewH = pad.top + plotH - y(row.views);
+          var actionH = pad.top + plotH - y(row.actions);
+          svg.appendChild(svgEl("rect", {
+            x: x0,
+            y: y(row.views),
+            width: Math.max(slotW - 7, 2),
+            height: Math.max(viewH, row.views ? 2 : 0),
+            rx: 3,
+            class: "bar-view"
+          }));
+          svg.appendChild(svgEl("rect", {
+            x: x0 + Math.max(slotW - 7, 2) * .36,
+            y: y(row.actions),
+            width: Math.max((slotW - 7) * .28, 2),
+            height: Math.max(actionH, row.actions ? 2 : 0),
+            rx: 3,
+            class: "bar-action"
+          }));
+        });
+
+        [0, 6, 12, 18, 23].forEach(function (hour) {
+          var xx = pad.left + hour * slotW + slotW / 2;
+          addText(svg, hourLabel(hour), xx, height - 18, "tick-label", "middle");
+        });
+        addText(svg, "count", pad.left, 10, "axis-label", "start");
+        addText(svg, "hour", width / 2, height - 2, "axis-label", "middle");
+      }
+
+      function renderFunnel(evidence) {
+        var views = rolling(evidence, "page_view") || 0;
+        var rows = [
+          { label: "views", value: views },
+          { label: "engaged", value: rolling(evidence, "page_engagement") },
+          { label: "sample", value: rolling(evidence, "sample_click") + rolling(evidence, "showcase_sample_click") },
+          { label: "notes", value: rolling(evidence, "note_intake_click") },
+          { label: "checkout", value: rolling(evidence, "checkout_click") },
+          { label: "leads", value: rolling(evidence, "lead_capture") }
+        ];
+        var max = Math.max.apply(null, rows.map(function (row) { return row.value; }).concat([1]));
+        $("funnelRows").innerHTML = rows.map(function (row, index) {
+          var width = Math.max((row.value / max) * 100, row.value ? 2 : 0);
+          var conversion = index === 0 || !views ? "" : '<span class="pct">' + pct((row.value / views) * 100) + '</span>';
+          return (
+            '<div class="funnel-row">' +
+              '<span>' + row.label + '</span>' +
+              '<span class="track"><span class="bar" style="width:' + width + '%"></span></span>' +
+              '<span class="count">' + fmt(row.value) + conversion + '</span>' +
+            '</div>'
+          );
+        }).join("");
+
+        var checkout = rolling(evidence, "checkout_click");
+        var leads = rolling(evidence, "lead_capture");
+        var noteClicks = rolling(evidence, "note_intake_click");
+        $("funnelCaption").textContent =
+          "Selected range: " + fmt(views) + " views, " + fmt(noteClicks) + " notes clicks, " +
+          fmt(checkout) + " checkout clicks, " + fmt(leads) + " leads.";
+      }
+
       function cleanSignal(text) {
-        return String(text || "")
+        var s = String(text || "");
+        var map = {
+          page_views_1d_above_prior_6d_average: "Views today beat the recent daily average",
+          page_views_1d_above_prior_13d_average: "Views today beat the two-week daily average",
+          calendar_day_page_views_increased: "Today has more views than the last measured day",
+          sample_clicks_present_1d: "Someone opened the sample today",
+          action_sessions_present: "Some sessions moved past passive viewing",
+          engaged_sessions_10s_present: "Some visitors stayed longer than 10 seconds",
+          page_engagement_observed_or_lifted_1d: "Page engagement happened today",
+          page_view_observed_or_lifted_1d: "Views happened today",
+          sample_click_observed_or_lifted_1d: "Sample clicks happened today",
+          showcase_engagement_observed_or_lifted_1d: "The showcase is getting engagement"
+        };
+        if (map[s]) return map[s];
+        return s
           .replace(/_observed_or_lifted_1d/g, "")
           .replace(/_1d_above_prior_/g, " above ")
           .replace(/_/g, " ");
       }
 
-      function stageLabel(stage) {
-        var s = String(stage || "none_detected").replace(/_/g, " ");
-        return s === "none detected" ? "none" : s;
-      }
-
-      function rolling(data, key) {
-        var windowKey = days + "d";
-        var counts = (((data || {}).rolling || {}).intent_event_counts || {})[windowKey] || {};
-        return Number(counts[key] || 0);
-      }
-
-      function actionCount(obs) {
-        var depth = (obs || {}).funnel_depth || {};
-        return Number(depth.sessions_with_action || 0);
-      }
-
-      function maxOf(items) {
-        return Math.max.apply(null, items.map(function (item) { return item.value || 0; }).concat([1]));
-      }
-
-      function renderBars(id, items) {
-        var max = maxOf(items);
-        $(id).innerHTML = items.map(function (item) {
-          var width = Math.max((Number(item.value || 0) / max) * 100, item.value ? 2 : 0);
-          return (
-            '<div class="bar-row">' +
-              '<span>' + item.label + '</span>' +
-              '<span class="bar-track"><span class="bar" style="width:' + width + '%"></span></span>' +
-              '<span>' + fmt(item.value) + '</span>' +
-            '</div>'
-          );
-        }).join("");
-      }
-
-      function renderSignals(evidence) {
-        var signals = (((evidence || {}).positive_change || {}).signals || []).slice(0, 8);
-        if (!signals.length) {
-          $("signalsList").innerHTML = '<div class="signal"><div class="signal-name">No positive movement yet.</div><div class="signal-meta">Waiting for signal.</div></div>';
-          return;
-        }
-        $("signalsList").innerHTML = signals.map(function (s) {
-          var stage = stageLabel(s.stage || (String(s.signal || "").indexOf("page") >= 0 ? "attention" : "inspection"));
-          var lift = s.lift ? " / " + s.lift + "x" : "";
-          var base = s.baseline !== null && s.baseline !== undefined && s.baseline !== "" ? " vs " + s.baseline : "";
-          return (
-            '<div class="signal">' +
-              '<div class="signal-top">' +
-                '<div class="signal-name">' + cleanSignal(s.signal) + '</div>' +
-                '<span class="pill">' + stage + '</span>' +
-              '</div>' +
-              '<div class="signal-meta">' + fmt(s.current) + base + lift + '</div>' +
-            '</div>'
-          );
-        }).join("");
-      }
-
-      function renderHours(evidence) {
-        var rows = ((((evidence || {}).observable_signals || {}).hourly_event_counts_utc) || []).slice(-24);
-        var totals = rows.map(function (row) {
-          var events = row.events || {};
-          return Object.keys(events).reduce(function (sum, key) { return sum + Number(events[key] || 0); }, 0);
+      function renderSignals(evidence, ops) {
+        var positive = ((evidence || {}).positive_change || {});
+        var raw = (positive.signals || []).filter(function (signal) {
+          var stage = String(signal.stage || "");
+          var name = String(signal.signal || "");
+          if (stage === "system_health") return false;
+          if (name.indexOf("smoke_test") >= 0) return false;
+          if (name.indexOf("money_loop_tick") >= 0) return false;
+          if (name.indexOf("research_journal") >= 0) return false;
+          return true;
+        }).slice(0, 4);
+        var moneyObj = (((ops || {}).relay_success || {}).money || {});
+        var rows = raw.map(function (signal) {
+          var meta = [];
+          if (signal.current !== null && signal.current !== undefined) meta.push("now " + fmt(signal.current));
+          if (signal.baseline !== null && signal.baseline !== undefined) meta.push("baseline " + fmt(signal.baseline));
+          if (signal.lift) meta.push(fmt(signal.lift) + "x");
+          return {
+            name: cleanSignal(signal.signal),
+            meta: meta.join(" / ")
+          };
         });
-        var max = Math.max.apply(null, totals.concat([1]));
-        $("hourBars").innerHTML = totals.map(function (total) {
-          var height = Math.max((total / max) * 100, total ? 4 : 2);
-          return '<span class="hour" title="' + total + ' events" style="height:' + height + '%"></span>';
+        rows.push({
+          name: Number(moneyObj.payments || 0) > 0 ? "Money happened" : "No paid buyer yet",
+          meta: money(moneyObj.gross_usd || 0) + " gross / " + fmt(moneyObj.payments || 0) + " payments"
+        });
+        $("signalsList").innerHTML = rows.map(function (row) {
+          return '<div class="signal"><div class="signal-name">' + row.name + '</div><div class="signal-meta">' + row.meta + '</div></div>';
         }).join("");
       }
 
       function renderTiming(evidence) {
-        var obs = ((evidence || {}).observable_signals || {});
-        var timing = obs.first_action_timing_seconds || {};
-        var outbound = (obs.outbound_link_response || {}).seconds_after_send || {};
-        renderBars("timingBars", [
-          { label: "sample sec", value: (timing.sample_click || {}).median || 0 },
-          { label: "notes sec", value: (timing.note_intake_click || {}).median || 0 },
-          { label: "checkout sec", value: (timing.checkout_click || {}).median || 0 },
-          { label: "send->visit", value: outbound.median || 0 }
-        ]);
+        var timing = (((evidence || {}).observable_signals || {}).first_action_timing_seconds || {});
+        var rows = [
+          { label: "sample click", obj: timing.sample_click || {} },
+          { label: "notes click", obj: timing.note_intake_click || {} },
+          { label: "checkout click", obj: timing.checkout_click || {} },
+          { label: "lead capture", obj: timing.lead_capture || {} }
+        ];
+        $("timingList").innerHTML = rows.map(function (row) {
+          var count = Number(row.obj.count || 0);
+          var median = row.obj.median;
+          var value = count ? formatDuration(median) : "no data";
+          return (
+            '<div class="plain-row">' +
+              '<strong>' + row.label + '</strong>' +
+              '<span>' + value + (count ? " / " + fmt(count) + " sessions" : "") + '</span>' +
+            '</div>'
+          );
+        }).join("");
+      }
+
+      function renderLoop(ops) {
+        var success = ((ops || {}).relay_success || {});
+        var moneySystem = ((ops || {}).money_system || {});
+        var outreach = success.outreach || {};
+        var readiness = success.launch_readiness || {};
+        var rows = [
+          {
+            label: "current job",
+            value: readiness.next_step || success.next_action || "watch for buyer signal"
+          },
+          {
+            label: "send window",
+            value: outreach.send_window_next_open_local ? new Date(outreach.send_window_next_open_local).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "not scheduled"
+          },
+          {
+            label: "sample progress",
+            value: success.active_experiment_progress || "0/10"
+          },
+          {
+            label: "manual input",
+            value: (((moneySystem.operator_mode || {}).do_not_interrupt_user) || ((success.owner_absence_contract || {}).manual_input_required === false)) ? "not needed right now" : "needed"
+          }
+        ];
+        $("loopList").innerHTML = rows.map(function (row) {
+          return '<div class="plain-row"><strong>' + row.label + '</strong><span>' + row.value + '</span></div>';
+        }).join("");
       }
 
       function render(evidence, ops) {
         var positive = (evidence || {}).positive_change || {};
         var obs = (evidence || {}).observable_signals || {};
-        var depth = obs.funnel_depth || {};
         var relayMoney = (((ops || {}).relay_success || {}).money || {});
-        var gross = relayMoney.gross_usd || 0;
-        var payments = relayMoney.payments || 0;
-        var stage = positive.success_stage || "none_detected";
-        var signals = (positive.signals || []).length;
+        var success = ((ops || {}).relay_success || {});
+        var moneySystem = ((ops || {}).money_system || {});
+        var launch = success.launch_readiness || {};
+        var progress =
+          success.active_experiment_progress ||
+          moneySystem.active_experiment_progress ||
+          (((success.money_proof_mandate || {}).score || {}).active_experiment_progress) ||
+          (((moneySystem.money_proof_mandate || {}).score || {}).active_experiment_progress) ||
+          "-";
+        var nextStep =
+          launch.next_step ||
+          success.next_action ||
+          moneySystem.next_action ||
+          "waiting for the next clean signal";
+        var viewsToday = rolling(evidence, "page_view", 1);
+        var viewsBaseline = 0;
+        var viewSignal = (positive.signals || []).find(function (signal) {
+          return signal.signal === "page_views_1d_above_prior_6d_average";
+        });
+        if (viewSignal && viewSignal.baseline !== null && viewSignal.baseline !== undefined) viewsBaseline = Number(viewSignal.baseline || 0);
+        var clicksToday = actionTotal(evidence, 1);
+        var sampleToday = rolling(evidence, "sample_click", 1) + rolling(evidence, "showcase_sample_click", 1);
+        var trendRows = dailySeries(evidence);
+        var hourRows = todayHourlySeries(evidence);
+        var first = trendRows[0] || { views: 0, actions: 0 };
+        var last = trendRows[trendRows.length - 1] || { views: 0, actions: 0 };
+        var delta = last.views - first.views;
 
-        $("stageValue").textContent = stageLabel(stage);
-        $("stageHint").textContent = "current strongest stage";
-        $("moneyValue").textContent = money(gross);
-        $("moneyHint").textContent = "payments: " + fmt(payments);
-        $("actionsValue").textContent = fmt(actionCount(obs));
-        $("actionsHint").textContent = fmt(depth.sessions || obs.session_count || 0) + " sessions";
-        $("signalsValue").textContent = fmt(signals);
-        $("signalsHint").textContent = "positive signals";
-        $("summaryLine").textContent = "Watching attention, inspection, buyer signal, and revenue.";
+        $("viewsValue").textContent = fmt(viewsToday);
+        $("viewsHint").textContent = viewsBaseline
+          ? fmt(viewSignal.lift || (viewsToday / viewsBaseline)) + "x recent daily average (" + fmt(viewsBaseline) + ")"
+          : "views logged in the last 24 hours";
+        $("clicksValue").textContent = fmt(clicksToday);
+        $("clicksHint").textContent = fmt(sampleToday) + " sample clicks today.";
+        $("moneyValue").textContent = money(relayMoney.gross_usd || 0);
+        $("moneyHint").textContent = fmt(relayMoney.payments || 0) + " paid tests.";
+        $("nextMoveValue").textContent = progress;
+        $("nextMoveHint").textContent = nextStep;
+        $("summaryLine").textContent = viewsToday > viewsBaseline && viewsBaseline
+          ? "Attention is up. Money is still $0."
+          : "Tracking whether attention becomes buyer signal.";
         $("updatedAt").textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-        $("rangeLabel").textContent = days === 1 ? "Day" : days === 7 ? "Week" : days === 30 ? "Month" : "90 days";
+        $("rangeLabel").textContent = rangeName();
+        $("trendRange").textContent = days === 1 ? "last 7 days / local dates" : rangeName() + " / local dates";
 
-        renderBars("funnelBars", [
-          { label: "views", value: rolling(evidence, "page_view") },
-          { label: "engaged", value: rolling(evidence, "page_engagement") },
-          { label: "sample", value: rolling(evidence, "sample_click") + rolling(evidence, "showcase_sample_click") },
-          { label: "notes", value: rolling(evidence, "note_intake_click") },
-          { label: "started", value: rolling(evidence, "notes_started") },
-          { label: "checkout", value: rolling(evidence, "checkout_click") },
-          { label: "leads", value: rolling(evidence, "lead_capture") }
-        ]);
-
-        renderSignals(evidence);
-        renderHours(evidence);
+        drawLineChart("trendChart", trendRows);
+        drawHourChart("hourChart", hourRows);
+        renderFunnel(evidence);
+        renderSignals(evidence, ops);
         renderTiming(evidence);
+        renderLoop(ops);
+
+        $("trendCaption").textContent = trendRows.length
+          ? (days === 1
+              ? "Today: " + fmt(viewsToday) + " views vs " + fmt(viewsBaseline) + " recent daily average. Offer clicks are sample, notes, checkout, and lead actions."
+              : "Views changed by " + (delta >= 0 ? "+" : "") + fmt(delta) + " from " + shortDate(first.label) + " to " + shortDate(last.label) + ". Offer clicks are sample, notes, checkout, and lead actions.")
+          : "No trend data in this range.";
+        var activeHour = hourRows.reduce(function (best, row) {
+          return (row.views + row.actions) > (best.views + best.actions) ? row : best;
+        }, { hour: 0, views: 0, actions: 0 });
+        $("hourCaption").textContent = (activeHour.views + activeHour.actions)
+          ? "Most activity today is around " + hourLabel(activeHour.hour) + ": " + fmt(activeHour.views) + " views and " + fmt(activeHour.actions) + " offer clicks."
+          : "No activity logged today yet.";
       }
 
       function setStatus(kind, text) {
@@ -676,7 +1167,8 @@
         try {
           setStatus("", "updating");
           var bust = Date.now();
-          var evidenceUrl = API + "/evidence-export?days=" + days + "&limit=120&_=" + bust;
+          var evidenceDays = Math.max(days, 30);
+          var evidenceUrl = API + "/evidence-export?days=" + evidenceDays + "&limit=160&_=" + bust;
           var opsUrl = API + "/ops-check?days=7&_=" + bust;
           var responses = await Promise.all([
             fetch(evidenceUrl, { cache: "no-store" }),
